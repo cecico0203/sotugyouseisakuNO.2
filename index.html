@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>占いおみくじ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('temple-background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 120%;
+            max-width: 400px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            margin: 10px auto;
+            display: block;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.1);
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #555;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+            display: none;
+        }
+
+        #timer {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #1100ff;
+            font-weight: bold;
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: none;
+        }
+
+        #fortuneButton {
+            margin-top: 20px;
+            display: none;
+        }
+
+        #fortune {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #444;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #omikujiAnimation {
+            display: none;
+            position: absolute;
+            top: -50px;
+            left: 10%;
+            z-index: 10;
+            width: 30%;
+            max-width: 120px;
+            height: auto;
+        }
+
+        @keyframes showResult {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 5;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay"></div>
+
+    <div class="container">
+        <h1>🔮占いおみくじ🔮</h1>
+        <p style="white-space: nowrap;">ボタンをクリックして今日の運勢を占ってね★</p>
+        <button id="omikujiButton">おみくじを引く</button>
+        <div id="omikujiAnimation">
+            <img src="omikuzi-animetion.gif" alt="おみくじアニメーション" />
+        </div>
+        <div id="result"></div>
+        <button id="fortuneButton" style="display: none;">占いの結果を見る</button>
+        <div id="fortune"></div>
+    </div>
+
+    <div id="timer"></div>
+
+    <script>
+        const fortunes = {
+            "神": "豪運の持ち主！最強！何をやってもうまくいく！君が全て正しい★★★",
+            "大吉": "最高の運勢！チャンスを掴んで！",
+            "中吉": "もう少しの努力で世界が変わる！",
+            "小吉": "慎重に過ごせばいい結果になる！",
+            "吉": "今日は普通だ！！！！！",
+            "末吉": "今日は我慢することが重要かもしれない！",
+            "凶": "今日は注意が必要だ！気をつけて！",
+            "大凶": "無理しないで！休むことも大事！"
+        };
+
+        const cooldownTime = 1000;
+
+        document.getElementById("omikujiButton").addEventListener("click", function () {
+            const now = new Date().getTime();
+            const lastDrawTime = localStorage.getItem("lastOmikujiTime");
+            if (lastDrawTime && now - lastDrawTime < cooldownTime) {
+                alert("まだおみくじは引けません！");
+                return;
+            }
+
+            const resultDiv = document.getElementById("result");
+            const timerDiv = document.getElementById("timer");
+            const fortuneButton = document.getElementById("fortuneButton");
+            const omikujiAnimation = document.getElementById("omikujiAnimation");
+            const overlay = document.getElementById("overlay");
+            overlay.style.display = "block";
+            omikujiAnimation.style.display = "block";
+            resultDiv.style.opacity = 0;
+            setTimeout(function () {
+                const results = [
+                    { text: "神", weight: 1 },
+                    { text: "大吉", weight: 52 },
+                    { text: "中吉", weight: 52 },
+                    { text: "小吉", weight: 52 },
+                    { text: "吉", weight: 52 },
+                    { text: "末吉", weight: 52 },
+                    { text: "凶", weight: 52 },
+                    { text: "大凶", weight: 52 },
+                ];
+                const result = weightedRandom(results);
+                if (fortunes[result]) {
+                    resultDiv.innerHTML = "結果: <strong>" + result + "</strong>";
+                    resultDiv.style.display = "block";
+                    resultDiv.style.animation = "showResult 1s forwards";
+                    localStorage.setItem("omikujiResult", result);
+                    localStorage.setItem("lastOmikujiTime", now);
+                    fortuneButton.style.display = "block";
+                } else {
+                    resultDiv.innerHTML = "エラー: おみくじ結果が取得できませんでした。";
+                    resultDiv.style.display = "block";
+                }
+                omikujiAnimation.style.display = "none";
+                overlay.style.display = "none";
+                displayTimeRemaining();
+            }, 3000);
+        });
+
+        document.getElementById("fortuneButton").addEventListener("click", function () {
+            const result = localStorage.getItem("omikujiResult");
+            const fortuneDiv = document.getElementById("fortune");
+            if (result && fortunes[result]) {
+                fortuneDiv.innerHTML = "占いの結果: <strong>" + fortunes[result] + "</strong>";
+                fortuneDiv.style.display = "block";
+                fortuneDiv.style.animation = "fadeIn 1s forwards";
+            } else {
+                fortuneDiv.innerHTML = "占い結果を取得できませんでした。";
+                fortuneDiv.style.display = "block";
+            }
+        });
+
+        function weightedRandom(options) {
+            const totalWeight = options.reduce((total, item) => total + item.weight, 0);
+            const random = Math.random() * totalWeight;
+            let cumulativeWeight = 0;
+
+            for (const option of options) {
+                cumulativeWeight += option.weight;
+                if (random < cumulativeWeight) {
+                    return option.text;
+                }
+            }
+        }
+
+        function displayTimeRemaining() {
+            const timerDiv = document.getElementById("timer");
+            const lastDrawTime = localStorage.getItem("lastOmikujiTime");
+            const now = new Date().getTime();
+            if (!lastDrawTime) {
+                timerDiv.style.display = "none";
+                return;
+            }
+
+            const timePassed = now - lastDrawTime;
+            const remainingTime = Math.max(0, cooldownTime - timePassed);
+
+            if (remainingTime > 0) {
+                const seconds = Math.floor(remainingTime / 1000);
+
+                timerDiv.innerHTML = "またおみくじを引けるまで: " + seconds + "秒";
+                timerDiv.style.display = "block";
+
+                setTimeout(displayTimeRemaining, 100);
+            } else {
+                timerDiv.innerHTML = "おみくじ引けるようになったよ！";
+                timerDiv.style.display = "block";
+            }
+        }
+        window.onload = function () {
+            displayTimeRemaining();
+        };
+    </script>
+
+</body>
+
+</html>
